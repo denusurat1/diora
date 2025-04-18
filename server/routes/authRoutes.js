@@ -3,43 +3,7 @@ const jwt = require('jsonwebtoken');
 const passport = require('../config/passport');
 const User = require('../models/User');
 const auth = require('../middleware/auth');
-const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const router = express.Router();
-
-// Configure Google Strategy
-passport.use(new GoogleStrategy({
-    clientID: process.env.GOOGLE_CLIENT_ID,
-    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    callbackURL: "/api/auth/google/callback"
-  },
-  async (accessToken, refreshToken, profile, done) => {
-    try {
-      // Check if user already exists
-      let user = await User.findOne({ email: profile.emails[0].value });
-      
-      if (!user) {
-        // Create new user if doesn't exist
-        user = await User.create({
-          email: profile.emails[0].value,
-          firstName: profile.name.givenName,
-          lastName: profile.name.familyName,
-          googleId: profile.id,
-          authProvider: 'google',
-          password: Math.random().toString(36).slice(-8)
-        });
-      } else {
-        // Update existing user's Google-specific fields if they're logging in with Google
-        user.googleId = profile.id;
-        user.authProvider = 'google';
-        await user.save();
-      }
-      
-      return done(null, user);
-    } catch (error) {
-      return done(error, null);
-    }
-  }
-));
 
 // Initialize Passport and restore authentication state from session
 router.use(passport.initialize());
@@ -95,8 +59,6 @@ router.get('/google/callback',
         if (req.query.state) {
           const stateData = JSON.parse(decodeURIComponent(req.query.state));
           const { redirectPath, searchParams } = stateData;
-          
-          // Reconstruct the full redirect URL
           redirectUrl = redirectPath;
           if (searchParams) {
             redirectUrl += (redirectUrl.includes('?') ? '&' : '?') + searchParams;
@@ -104,18 +66,26 @@ router.get('/google/callback',
         }
       } catch (e) {
         console.error('Error parsing state:', e);
-        // Fall back to default redirect
       }
 
-      // Add token to the redirect URL
-      const separator = redirectUrl.includes('?') ? '&' : '?';
-      const finalRedirectUrl = `${redirectUrl}${separator}token=${encodeURIComponent(token)}`;
+      // Debug logging for environment variables and URL construction
+      console.log('Environment Variables:');
+      console.log('CLIENT_URL:', process.env.CLIENT_URL);
+      console.log('NODE_ENV:', process.env.NODE_ENV);
       
-      console.log('Redirecting to:', finalRedirectUrl);
+      // Construct the frontend URL
+      const frontendUrl = process.env.CLIENT_URL || 'http://localhost:3000';
+      const finalRedirectUrl = `${frontendUrl}/auth/google/callback?token=${encodeURIComponent(token)}`;
+      
+      console.log('Redirect Details:');
+      console.log('Frontend URL:', frontendUrl);
+      console.log('Final Redirect URL:', finalRedirectUrl);
+      
       res.redirect(finalRedirectUrl);
     } catch (error) {
       console.error('Google callback error:', error);
-      res.redirect('/login?error=auth_failed');
+      const frontendUrl = process.env.CLIENT_URL || 'http://localhost:3000';
+      res.redirect(`${frontendUrl}/login?error=auth_failed`);
     }
   }
 );

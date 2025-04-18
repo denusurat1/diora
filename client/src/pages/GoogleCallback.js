@@ -8,55 +8,60 @@ const GoogleCallback = () => {
   const location = useLocation();
   const { handleGoogleCallback } = useAuth();
   const [isProcessing, setIsProcessing] = useState(true);
-  const [hasError, setHasError] = useState(false);
 
   useEffect(() => {
+    let hasHandled = false;
+
     const handleAuth = async () => {
+      if (hasHandled) return;
+      hasHandled = true;
+
       try {
-        // Get token from URL params
         const params = new URLSearchParams(location.search);
         const token = params.get('token');
         const error = params.get('error');
-        
+
         if (error) {
-          throw new Error(error);
+          console.error('Authentication error:', error);
+          toast.error('Authentication failed. Please try again.', { toastId: 'google-auth-error' });
+          navigate('/login', { replace: true });
+          return;
         }
 
         if (!token) {
-          throw new Error('No token found in URL');
+          console.error('No token found in URL');
+          toast.error('No token found. Please try again.', { toastId: 'google-no-token' });
+          navigate('/login', { replace: true });
+          return;
         }
 
-        // Handle the Google callback
         const success = await handleGoogleCallback(token);
-        
+
         if (success) {
-          // Get the stored redirect path or default to home
+          toast.success('Successfully signed in with Google!', { toastId: 'google-login-success' });
           const redirectPath = localStorage.getItem('postLoginRedirect') || '/';
-          localStorage.removeItem('postLoginRedirect'); // Clean up
+          localStorage.removeItem('postLoginRedirect');
           navigate(redirectPath, { replace: true });
         } else {
-          throw new Error('Failed to complete authentication');
-        }
-      } catch (error) {
-        console.error('Google callback error:', error);
-        // Only show error message once and if we haven't shown it before
-        if (!hasError) {
-          setHasError(true);
-          toast.error('Authentication failed. Please try again.');
+          toast.error('Failed to complete authentication', { toastId: 'google-auth-fail' });
           navigate('/login', { replace: true });
         }
+      } catch (err) {
+        console.error('Google callback error:', err);
+        toast.error('Something went wrong. Please try again.', { toastId: 'google-callback-error' });
+        navigate('/login', { replace: true });
       } finally {
         setIsProcessing(false);
       }
     };
 
-    // Only process if we haven't encountered an error yet
-    if (isProcessing && !hasError) {
+    if (isProcessing) {
       handleAuth();
     }
-  }, [location, navigate, handleGoogleCallback, isProcessing, hasError]);
 
-  // Don't render anything if we're not processing anymore
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   if (!isProcessing) {
     return null;
   }

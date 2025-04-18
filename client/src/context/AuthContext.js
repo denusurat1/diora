@@ -12,9 +12,23 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     // Check if user is logged in from localStorage
+    const token = localStorage.getItem('token');
     const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
+    
+    if (token && storedUser) {
+      // Set axios default header
+      api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      
+      try {
+        // Parse and validate stored user data
+        const userData = JSON.parse(storedUser);
+        setUser(userData);
+      } catch (error) {
+        console.error('Error parsing stored user data:', error);
+        // Clear invalid data
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+      }
     }
     setLoading(false);
   }, []);
@@ -77,7 +91,7 @@ export const AuthProvider = ({ children }) => {
       searchParams: currentSearch.slice(1) // remove the leading '?'
     };
     
-    // Construct the Google login URL
+    // Construct the Google login URL with the API URL
     const googleLoginUrl = `${apiUrl}/api/auth/google/login?redirect=${encodeURIComponent(currentPath)}&searchParams=${encodeURIComponent(currentSearch.slice(1))}`;
     
     // Store the full current path for post-login redirect
