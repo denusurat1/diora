@@ -1,14 +1,21 @@
 const express = require('express');
 const Product = require('../models/Product');
 const router = express.Router();
+const auth = require('../middleware/auth');
 
 // GET all products
 router.get('/', async (req, res) => {
   try {
-    const products = await Product.find();
+    console.log('Fetching all products...');
+    const products = await Product.find().sort({ createdAt: -1 });
+    console.log(`Found ${products.length} products`);
     res.json(products);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
+  } catch (error) {
+    console.error('Error fetching products:', error);
+    res.status(500).json({ 
+      message: 'Error fetching products',
+      error: error.message 
+    });
   }
 });
 
@@ -20,48 +27,72 @@ router.get('/:id', async (req, res) => {
       return res.status(404).json({ message: 'Product not found' });
     }
     res.json(product);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
+  } catch (error) {
+    console.error('Error fetching product:', error);
+    res.status(500).json({ 
+      message: 'Error fetching product',
+      error: error.message 
+    });
   }
 });
 
-// POST a new product
-router.post('/', async (req, res) => {
-  const { name, description, price, image } = req.body;
-  const newProduct = new Product({ name, description, price, image });
-
+// POST a new product (Admin only)
+router.post('/', auth, async (req, res) => {
   try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Not authorized' });
+    }
+
+    const { name, description, price, image } = req.body;
+    const newProduct = new Product({ name, description, price, image });
+
     const savedProduct = await newProduct.save();
     res.status(201).json(savedProduct);
-  } catch (err) {
-    res.status(400).json({ message: err.message });
+  } catch (error) {
+    console.error('Error creating product:', error);
+    res.status(500).json({ 
+      message: 'Error creating product',
+      error: error.message 
+    });
   }
 });
 
-// DELETE a product by ID
-router.delete('/:id', async (req, res) => {
+// DELETE a product by ID (Admin only)
+router.delete('/:id', auth, async (req, res) => {
   try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Not authorized' });
+    }
+
     const { id } = req.params;
     const deletedProduct = await Product.findByIdAndDelete(id);
     if (!deletedProduct) {
       return res.status(404).json({ message: 'Product not found' });
     }
     res.json({ message: 'Product deleted successfully' });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
+  } catch (error) {
+    console.error('Error deleting product:', error);
+    res.status(500).json({ 
+      message: 'Error deleting product',
+      error: error.message 
+    });
   }
 });
 
-// PUT (update) a product by ID
-router.put('/:id', async (req, res) => {
+// PUT (update) a product by ID (Admin only)
+router.put('/:id', auth, async (req, res) => {
   try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Not authorized' });
+    }
+
     const { id } = req.params;
     const { name, description, price, image } = req.body;
 
     const updatedProduct = await Product.findByIdAndUpdate(
       id,
       { name, description, price, image },
-      { new: true } // Return the updated product
+      { new: true, runValidators: true }
     );
 
     if (!updatedProduct) {
@@ -69,8 +100,12 @@ router.put('/:id', async (req, res) => {
     }
 
     res.json(updatedProduct);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
+  } catch (error) {
+    console.error('Error updating product:', error);
+    res.status(500).json({ 
+      message: 'Error updating product',
+      error: error.message 
+    });
   }
 });
 
