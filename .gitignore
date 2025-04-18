@@ -1,0 +1,21 @@
+# Node.js
+node_modules/
+package-lock.json
+yarn.lock
+
+# React
+build/
+node_modules/
+.out/
+vendor/
+
+# Server
+.env
+server.js
+
+# IDE specific files
+.vscode/
+.idea/
+
+# Log files
+*.log
