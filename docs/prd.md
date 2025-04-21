@@ -6,18 +6,23 @@ Diora is a diamond and gold jewelry e-commerce web application built with a focu
 
 ## 2. Tech Stack
 
-Frontend:
+### Frontend
 - React
 - React Router
 - React Toastify (for notifications)
-- Axios
+- Axios (API client)
 - CSS
 
-Backend:
+### Backend
 - Node.js
 - Express.js
 - MongoDB Atlas
 - OAuth 2.0 (Google Authentication)
+
+### Development & Deployment
+- Version Control: Git
+- Deployment-ready for platforms like Vercel or Render
+- Local development setup included
 
 ## 3. Core Features and Functionality
 
@@ -111,105 +116,129 @@ Backend:
    - Email verification
    - Support contact
 
-### 3.2 User Experience Workflows
+### 3.2 Product Features
 
-#### 1. New User Registration
-1. **Email Registration Path**
-   - Form completion
-   - Email verification
-   - Profile completion
-   - Welcome experience
+#### Catalog & Product Display
+- Product list fetched dynamically from MongoDB
+- Grid layout with image, title, price
+- "Add to Cart" and "View Details" for each product
+- Catalog reflects real-time product database updates
+- Dynamic routing based on product ID
+- Detailed product view with:
+  - High-quality images
+  - Detailed description
+  - Adjustable quantity
+  - Price information
+  - Add to cart functionality
+- Error handling for invalid products
 
-2. **Google Registration Path**
-   - OAuth consent
-   - Profile import
-   - Additional info collection
-   - Welcome experience
+#### Shopping Cart
+- Cart stored in localStorage
+- Displays product name, price, quantity
+- Ability to remove individual items
+- Real-time price calculation
+- Link to checkout page
+- Cart preservation across sessions
 
-#### 2. Returning User Login
-1. **Session Management**
-   - Persistent login option
-   - Remember me functionality
-   - Auto-logout settings
-   - Multiple device handling
+#### Checkout Process
+- Modal confirmation popup before placing order
+- Places order via API and stores in database
+- Clears cart upon confirmation
+- Toast notifications for success/failure
+- Order association with user account
 
-2. **Login Context Preservation**
-   - Shopping cart preservation
-   - Return to previous page
-   - Maintain search/filter states
-   - Preserve form data
+#### Order Management
+- Comprehensive order history
+- Displays each order: date, items, quantity, total
+- Option to clear order history
+- User-specific order tracking
+- Order status updates
 
-#### 3. User Session Flows
-1. **Active Session**
-   - Session timeout warnings
-   - Automatic renewal
-   - Idle state handling
-   - Background token refresh
+### 3.3 Admin Features
 
-2. **Session Recovery**
-   - Graceful session expiration
-   - Re-authentication flow
-   - State preservation during re-auth
-   - Error recovery
+#### Product Management
+- Add new products via form:
+  - Name
+  - Description
+  - Price
+  - Image URL
+- View existing products
+- Delete products
+- Edit existing product information
+- Pre-filled forms for updates
+- Live feedback using alerts
 
-### 3.3 Notification System
+#### Admin Reporting
+- Overall sales reports
+- User purchase analytics
+- Complete order and user metadata
+- Product performance metrics
+
+### 3.4 Notification System
 
 #### Toast Notification Requirements
 1. **Single Source of Truth**
    - Component-level notification handling
-   - No duplicate notifications from context/components
+   - No duplicate notifications
    - Unique toastId for each notification type
 
 2. **Authentication Notifications**
-   - Success notifications:
-     - Regular login success
-     - Google authentication success
-     - Registration success
-     - Logout success
-   - Error notifications:
+   - Success notifications for:
+     - Regular login
+     - Google authentication
+     - Registration
+     - Logout
+   - Error notifications for:
      - Authentication failures
      - Token-related errors
      - Network errors
      - Invalid credentials
 
 3. **Implementation Guidelines**
-   - Use unique toastIds to prevent duplicates
-   - Handle notifications at component level
-   - Clear error messages for user understanding
+   - Unique toastIds to prevent duplicates
+   - Component-level notification handling
+   - Clear error messages
    - Consistent notification styling
-   - Proper notification timing and duration
-
-4. **Google Authentication Specific**
-   - Success notification only shown in callback component
-   - Error notifications with specific identifiers:
-     - google-auth-error
-     - google-no-token
-     - google-login-success
-     - google-auth-fail
-     - google-callback-error
-
-### 3.4 Product Features
-[Previous product features sections remain unchanged...]
+   - Proper timing and duration
 
 ## 4. Technical Requirements
 
 ### 4.1 Code Organization
+```
+diora/
+├── client/                        # React frontend
+│   ├── public/
+│   │   └── ...
+│   ├── src/
+│   │   ├── components/            # Navbar, Footer
+│   │   ├── context/               # CartContext.js
+│   │   ├── pages/                 # Home.js, Catalog.js, Product.js, etc.
+│   │   ├── utils/                 # Axios instance config (api.js)
+│   │   ├── App.js                 # Main App component
+│   │   ├── index.js               # Entry point
+│   └── package.json              # React project config
+│
+├── server/                        # Node + Express backend
+│   ├── models/                    # Mongoose models: Product.js, Order.js
+│   ├── routes/                    # Express routes: productRoutes.js, orderRoutes.js
+│   ├── .env                       # MongoDB connection string
+│   ├── server.js                 # Express entry point
+│   └── package.json              # Backend project config
+│
+├── .gitignore
+```
+
+### 4.2 Development Guidelines
 - Clear separation of concerns between context and components
 - Component-level handling of UI feedback
 - Consistent error handling patterns
 - Prevention of race conditions in async operations
 
-### 4.2 State Management
+### 4.3 State Management
 - Proper auth state management
 - Secure token handling
 - User session persistence
 - Clear state cleanup on logout
-
-### 4.3 Error Handling
-- Comprehensive error catching
-- User-friendly error messages
-- Proper error logging
-- Prevention of cascading failures
 
 ## 5. Security Requirements
 

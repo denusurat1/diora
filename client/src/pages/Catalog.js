@@ -79,23 +79,27 @@ const Catalog = () => {
     );
   }
 
-  const handleAddToCart = (product) => {
-    addToCart({ 
-      id: product._id,
-      name: product.name, 
-      price: product.price, 
-      quantity: 1, 
-      image: product.image 
-    });
-    toast.success(`${product.name} added to cart!`, {
-      position: 'top-center',
-      autoClose: 2000,
-      hideProgressBar: false,
-      closeOnClick: true,
-      pauseOnHover: true,
-      draggable: true,
-      progress: undefined,
-    });
+  const handleAddToCart = async (product) => {
+    try {
+      await addToCart({ 
+        id: product._id,
+        name: product.name, 
+        price: product.price, 
+        quantity: 1, 
+        image: product.image 
+      });
+      toast.success(`${product.name} added to cart!`, {
+        position: 'top-center',
+        autoClose: 2000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+      });
+    } catch (error) {
+      // Error will be handled by CartContext
+    }
   };
 
   return (

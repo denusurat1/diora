@@ -25,17 +25,21 @@ const Product = () => {
   }, [id]);
 
   // Add to cart function with quantity and toast notification
-  const handleAddToCart = () => {
-    addToCart({ id: product._id, name: product.name, price: product.price, quantity });
-    toast.success(`${quantity} ${product.name}(s) added to the cart!`, {
-      position: 'top-center',
-      autoClose: 2000,
-      hideProgressBar: false,
-      closeOnClick: true,
-      pauseOnHover: true,
-      draggable: true,
-      progress: undefined,
-    });
+  const handleAddToCart = async () => {
+    try {
+      await addToCart({ id: product._id, name: product.name, price: product.price, quantity });
+      toast.success(`${quantity} ${product.name}(s) added to the cart!`, {
+        position: 'top-center',
+        autoClose: 2000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+      });
+    } catch (error) {
+      // Error will be handled by CartContext
+    }
   };
 
   return (

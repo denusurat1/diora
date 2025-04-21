@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
 
@@ -14,6 +14,11 @@ const Register = () => {
   const [loading, setLoading] = useState(false);
   const { register, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Get return URL from query parameters
+  const searchParams = new URLSearchParams(location.search);
+  const returnUrl = searchParams.get('returnUrl') || '/';
 
   const handleChange = (e) => {
     setFormData({
@@ -33,7 +38,7 @@ const Register = () => {
       const success = await register(formData);
       if (success) {
         toast.success('Registration successful!');
-        navigate('/');
+        navigate(returnUrl);
       }
     } catch (error) {
       console.error('Registration error:', error);
@@ -72,7 +77,7 @@ const Register = () => {
         <form onSubmit={handleSubmit} style={{ width: '100%' }}>
           <div style={{ marginBottom: '1.5rem' }}>
             <label 
-              htmlFor="firstName" 
+              htmlFor="firstName"
               style={{
                 display: 'block',
                 marginBottom: '0.5rem',
@@ -101,7 +106,7 @@ const Register = () => {
 
           <div style={{ marginBottom: '1.5rem' }}>
             <label 
-              htmlFor="lastName" 
+              htmlFor="lastName"
               style={{
                 display: 'block',
                 marginBottom: '0.5rem',
@@ -130,7 +135,7 @@ const Register = () => {
 
           <div style={{ marginBottom: '1.5rem' }}>
             <label 
-              htmlFor="email" 
+              htmlFor="email"
               style={{
                 display: 'block',
                 marginBottom: '0.5rem',
@@ -236,7 +241,10 @@ const Register = () => {
 
           <button
             type="button"
-            onClick={loginWithGoogle}
+            onClick={() => {
+              localStorage.setItem('postLoginRedirect', returnUrl);
+              loginWithGoogle();
+            }}
             style={{
               width: '100%',
               padding: '0.75rem',
@@ -260,7 +268,7 @@ const Register = () => {
           }}>
             Already have an account?{' '}
             <Link 
-              to="/login" 
+              to={`/login?returnUrl=${encodeURIComponent(returnUrl)}`}
               style={{
                 color: '#333',
                 textDecoration: 'underline'

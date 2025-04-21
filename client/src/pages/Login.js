@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-toastify';
 
@@ -11,6 +11,11 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const { login, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Get return URL from query parameters
+  const searchParams = new URLSearchParams(location.search);
+  const returnUrl = searchParams.get('returnUrl') || '/';
 
   const handleChange = (e) => {
     setFormData({
@@ -25,7 +30,7 @@ const Login = () => {
     try {
       const success = await login(formData.email, formData.password);
       if (success) {
-        navigate('/');
+        navigate(returnUrl);
       }
     } catch (error) {
       console.error('Login error:', error);
@@ -141,7 +146,10 @@ const Login = () => {
 
           <button
             type="button"
-            onClick={loginWithGoogle}
+            onClick={() => {
+              localStorage.setItem('postLoginRedirect', returnUrl);
+              loginWithGoogle();
+            }}
             style={{
               width: '100%',
               padding: '0.75rem',
@@ -165,7 +173,7 @@ const Login = () => {
           }}>
             Don't have an account?{' '}
             <Link 
-              to="/register" 
+              to={`/register?returnUrl=${encodeURIComponent(returnUrl)}`}
               style={{
                 color: '#333',
                 textDecoration: 'underline'

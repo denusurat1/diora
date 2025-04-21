@@ -53,6 +53,15 @@ router.get('/google/callback',
         { expiresIn: '24h' }
       );
 
+      // Initialize cart if it doesn't exist
+      if (!req.user.cart) {
+        req.user.cart = { items: [], updatedAt: Date.now() };
+      }
+
+      // Update last login and save user
+      req.user.lastLogin = Date.now();
+      await req.user.save();
+
       // Parse the state parameter
       let redirectUrl = '/';
       try {
@@ -68,18 +77,13 @@ router.get('/google/callback',
         console.error('Error parsing state:', e);
       }
 
-      // Debug logging for environment variables and URL construction
-      console.log('Environment Variables:');
-      console.log('CLIENT_URL:', process.env.CLIENT_URL);
-      console.log('NODE_ENV:', process.env.NODE_ENV);
-      
-      // Construct the frontend URL
+      // Construct the frontend URL with cart data
       const frontendUrl = process.env.CLIENT_URL || 'http://localhost:3000';
-      const finalRedirectUrl = `${frontendUrl}/auth/google/callback?token=${encodeURIComponent(token)}`;
-      
-      console.log('Redirect Details:');
-      console.log('Frontend URL:', frontendUrl);
-      console.log('Final Redirect URL:', finalRedirectUrl);
+      const userData = {
+        token,
+        cart: req.user.cart
+      };
+      const finalRedirectUrl = `${frontendUrl}/auth/google/callback?data=${encodeURIComponent(JSON.stringify(userData))}`;
       
       res.redirect(finalRedirectUrl);
     } catch (error) {
@@ -191,7 +195,8 @@ router.post('/login', async (req, res) => {
         firstName: user.firstName,
         lastName: user.lastName,
         role: user.role,
-        authProvider: user.authProvider
+        authProvider: user.authProvider,
+        cart: user.cart
       }
     });
   } catch (error) {
@@ -241,6 +246,108 @@ router.put('/profile', auth, async (req, res) => {
     });
   } catch (error) {
     console.error('Profile update error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Get user's cart
+router.get('/cart', auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    res.json({ items: user.cart.items });
+  } catch (error) {
+    console.error('Error fetching cart:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Add item to cart
+router.post('/cart/items', auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const { productId, name, price, quantity, image } = req.body;
+    const existingItemIndex = user.cart.items.findIndex(
+      item => item.productId.toString() === productId
+    );
+
+    if (existingItemIndex >= 0) {
+      // If item exists, add the new quantity to the existing quantity
+      user.cart.items[existingItemIndex].quantity += quantity || 1;
+    } else {
+      // If item doesn't exist, add it
+      user.cart.items.push({ productId, name, price, quantity: quantity || 1, image });
+    }
+
+    user.cart.updatedAt = Date.now();
+    await user.save();
+    res.json({ items: user.cart.items });
+  } catch (error) {
+    console.error('Error adding to cart:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Remove item from cart
+router.delete('/cart/items/:productId', auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    user.cart.items = user.cart.items.filter(
+      item => item.productId.toString() !== req.params.productId
+    );
+
+    user.cart.updatedAt = Date.now();
+    await user.save();
+    res.json({ items: user.cart.items });
+  } catch (error) {
+    console.error('Error removing from cart:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Clear cart
+router.delete('/cart', auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    user.cart.items = [];
+    user.cart.updatedAt = Date.now();
+    await user.save();
+    res.json({ items: [] });
+  } catch (error) {
+    console.error('Error clearing cart:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Merge cart
+router.post('/cart/merge', auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const { items } = req.body;
+    user.mergeCartItems(items);
+    await user.save();
+    
+    res.json({ items: user.cart.items });
+  } catch (error) {
+    console.error('Error merging cart:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });

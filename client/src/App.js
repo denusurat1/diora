@@ -25,9 +25,9 @@ import PrivateRoute from './components/PrivateRoute';
 
 function App() {
   return (
-    <AuthProvider>
+    <Router>
       <CartProvider>
-        <Router>
+        <AuthProvider>
           <div>
             <Navbar />
             <Routes>
@@ -37,8 +37,16 @@ function App() {
               <Route path="/about" element={<About />} />
               <Route path="/contact" element={<Contact />} />
               <Route path="/cart" element={<Cart />} />
-              <Route path="/checkout" element={<Checkout />} />
-              <Route path="/confirmation" element={<Confirmation />} />
+              <Route path="/checkout" element={
+                <PrivateRoute>
+                  <Checkout />
+                </PrivateRoute>
+              } />
+              <Route path="/confirmation" element={
+                <PrivateRoute>
+                  <Confirmation />
+                </PrivateRoute>
+              } />
               <Route path="/order-history" element={<OrderHistory />} />
               <Route path="/admin" element={<Admin />} />
               <Route path="/login" element={<Login />} />
@@ -53,9 +61,9 @@ function App() {
             <Footer />
             <ToastContainer />
           </div>
-        </Router>
+        </AuthProvider>
       </CartProvider>
-    </AuthProvider>
+    </Router>
   );
 }
 

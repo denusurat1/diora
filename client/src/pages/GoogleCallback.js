@@ -18,7 +18,7 @@ const GoogleCallback = () => {
 
       try {
         const params = new URLSearchParams(location.search);
-        const token = params.get('token');
+        const encodedData = params.get('data');
         const error = params.get('error');
 
         if (error) {
@@ -28,14 +28,15 @@ const GoogleCallback = () => {
           return;
         }
 
-        if (!token) {
-          console.error('No token found in URL');
-          toast.error('No token found. Please try again.', { toastId: 'google-no-token' });
+        if (!encodedData) {
+          console.error('No auth data found in URL');
+          toast.error('No authentication data found. Please try again.', { toastId: 'google-no-token' });
           navigate('/login', { replace: true });
           return;
         }
 
-        const success = await handleGoogleCallback(token);
+        const data = JSON.parse(decodeURIComponent(encodedData));
+        const success = await handleGoogleCallback(data.token, data.cart);
 
         if (success) {
           toast.success('Successfully signed in with Google!', { toastId: 'google-login-success' });
